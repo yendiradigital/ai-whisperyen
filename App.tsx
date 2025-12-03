@@ -6,6 +6,11 @@ import { ApiKeyModal } from './components/ApiKeyModal';
 import { transcribeAudio, generateActionPlan } from './services/groqService';
 import { RecorderState } from './types';
 
+// Detectar variable de entorno de forma segura
+const ENV_API_KEY = (typeof process !== 'undefined' && process.env && process.env.GROQ_API_KEY) 
+  ? process.env.GROQ_API_KEY 
+  : '';
+
 function App() {
   const [recorderState, setRecorderState] = useState<RecorderState>(RecorderState.IDLE);
   const [transcription, setTranscription] = useState<string>('');
@@ -13,23 +18,27 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<'idle' | 'transcribing' | 'generating'>('idle');
   
-  // API Key State
-  const [apiKey, setApiKey] = useState<string>('');
+  // API Key State (User Local Storage)
+  const [userApiKey, setUserApiKey] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // Determinar qué Key usar: Entorno tiene prioridad sobre Usuario
+  const effectiveApiKey = ENV_API_KEY || userApiKey;
+  const isEnvSet = !!ENV_API_KEY;
+
   useEffect(() => {
-    // Cargar API Key del localStorage al iniciar
+    // Cargar API Key del localStorage al iniciar (solo si no hay env var, aunque es bueno tenerla cargada por si acaso)
     const storedKey = localStorage.getItem('groq_api_key');
     if (storedKey) {
-      setApiKey(storedKey);
+      setUserApiKey(storedKey);
     }
   }, []);
 
-  const handleSaveApiKey = (key: string) => {
-    setApiKey(key);
+  const handleSaveUserApiKey = (key: string) => {
+    setUserApiKey(key);
     localStorage.setItem('groq_api_key', key);
     setError(null); // Limpiar errores previos si se actualiza la key
   };
@@ -92,8 +101,8 @@ function App() {
   const handleSendAudio = async () => {
     if (!audioBlob) return;
 
-    if (!apiKey) {
-      setError('Por favor configura tu Groq API Key en el icono de engranaje antes de continuar.');
+    if (!effectiveApiKey) {
+      setError('No se detectó configuración. Por favor configura tu Groq API Key en el engranaje.');
       setIsSettingsOpen(true);
       return;
     }
@@ -104,11 +113,11 @@ function App() {
     try {
       // Paso 1: Transcribir el audio
       setProcessingStep('transcribing');
-      const rawText = await transcribeAudio(apiKey, audioBlob);
+      const rawText = await transcribeAudio(effectiveApiKey, audioBlob);
       
       // Paso 2: Generar el plan de acción (To-Do List)
       setProcessingStep('generating');
-      const actionPlan = await generateActionPlan(apiKey, rawText);
+      const actionPlan = await generateActionPlan(effectiveApiKey, rawText);
 
       setTranscription(actionPlan);
       setRecorderState(RecorderState.IDLE); 
@@ -128,8 +137,9 @@ function App() {
       <ApiKeyModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)}
-        onSave={handleSaveApiKey}
-        currentKey={apiKey}
+        onSave={handleSaveUserApiKey}
+        currentKey={userApiKey}
+        isEnvSet={isEnvSet}
       />
 
       {/* Header / Nav Area */}
@@ -142,10 +152,11 @@ function App() {
         <div className="ml-auto z-10">
           <button 
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200 group"
+            className={`p-2 rounded-full transition-all duration-200 group ${isEnvSet ? 'text-green-500/50 hover:text-green-400 hover:bg-green-500/10' : 'text-neutral-400 hover:text-white hover:bg-white/10'}`}
             title="Configurar API Key"
           >
             <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+            {isEnvSet && <span className="absolute top-6 right-5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
           </button>
         </div>
       </nav>
