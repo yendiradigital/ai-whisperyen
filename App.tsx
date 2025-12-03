@@ -213,21 +213,21 @@ function App() {
           </h1>
         </div>
         
-        {/* RIGHT: Settings Button */}
+        {/* RIGHT: Settings Button (Hidden if ENV Key is present) */}
         <div>
-          <button 
-            onClick={() => setIsSettingsOpen(true)}
-            className={`p-2 rounded-full transition-all duration-200 group ${
-              isEnvSet 
-                ? 'text-green-500/50 hover:text-green-400 hover:bg-green-500/10' 
-                : !userApiKey 
+          {!isEnvSet && (
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className={`p-2 rounded-full transition-all duration-200 group ${
+                !userApiKey 
                   ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10 animate-pulse-fast' 
                   : 'text-neutral-400 hover:text-white hover:bg-white/10'
-            }`}
-            title="Configurar API Key"
-          >
-            <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-          </button>
+              }`}
+              title="Configurar API Key"
+            >
+              <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+            </button>
+          )}
         </div>
       </nav>
 
