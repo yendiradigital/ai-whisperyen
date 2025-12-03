@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, ShieldCheck, User, AlertCircle } from 'lucide-react';
 import { ControlIsland } from './components/ControlIsland';
 import { TranscriptionDisplay } from './components/TranscriptionDisplay';
 import { ApiKeyModal } from './components/ApiKeyModal';
@@ -143,20 +143,67 @@ function App() {
       />
 
       {/* Header / Nav Area */}
-      <nav className="w-full p-6 flex items-center relative">
-        <div className="absolute left-1/2 transform -translate-x-1/2">
+      <nav className="w-full p-6 flex items-center justify-between relative z-10">
+        
+        {/* LEFT: Status Indicator */}
+        <div className="flex items-center">
+          {isEnvSet ? (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 backdrop-blur-md animate-in fade-in slide-in-from-left-4 duration-700">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
+                <span className="text-xs font-medium text-green-400/90 tracking-wide">
+                  System Key Active
+                </span>
+              </div>
+            </div>
+          ) : userApiKey ? (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 backdrop-blur-md animate-in fade-in slide-in-from-left-4 duration-700">
+              <div className="h-2 w-2 rounded-full bg-indigo-400"></div>
+              <div className="flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-xs font-medium text-indigo-400/90 tracking-wide">
+                  User Key Active
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-red-500/5 border border-red-500/20 backdrop-blur-md animate-in fade-in slide-in-from-left-4 duration-700">
+              <div className="h-2 w-2 rounded-full bg-red-500/50"></div>
+              <div className="flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                <span className="text-xs font-medium text-red-400/90 tracking-wide">
+                  Setup Required
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* CENTER: Title */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block pointer-events-none">
           <h1 className="text-sm font-medium tracking-widest text-neutral-500 uppercase opacity-50">
             Groq AI Planner
           </h1>
         </div>
-        <div className="ml-auto z-10">
+        
+        {/* RIGHT: Settings Button */}
+        <div>
           <button 
             onClick={() => setIsSettingsOpen(true)}
-            className={`p-2 rounded-full transition-all duration-200 group ${isEnvSet ? 'text-green-500/50 hover:text-green-400 hover:bg-green-500/10' : 'text-neutral-400 hover:text-white hover:bg-white/10'}`}
+            className={`p-2 rounded-full transition-all duration-200 group ${
+              isEnvSet 
+                ? 'text-green-500/50 hover:text-green-400 hover:bg-green-500/10' 
+                : !userApiKey 
+                  ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10 animate-pulse-fast' 
+                  : 'text-neutral-400 hover:text-white hover:bg-white/10'
+            }`}
             title="Configurar API Key"
           >
             <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-            {isEnvSet && <span className="absolute top-6 right-5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
           </button>
         </div>
       </nav>
